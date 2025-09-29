@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weight Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 500px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #ddd;
+      text-align: center;
+    }
+    .up { color: green; font-weight: bold; }
+    .down { color: red; font-weight: bold; }
+    .same { color: gray; }
+    .delete-btn {
+      background: #f39c12;
+      border: none;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .delete-btn:hover {
+      background: #d35400;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Weight Tracker</h1>
+    <form id="weightForm">
+      <input type="date" id="date" required>
+      <input type="number" id="weight" step="0.1" placeholder="Weight (kg)" required>
+      <button type="submit">Add</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Weight (kg)</th>
+          <th>Trend</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="history"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.getElementById("weightForm");
+    const historyTable = document.getElementById("history");
+
+    let records = JSON.parse(localStorage.getItem("weightRecords")) || [];
+
+    function renderTable() {
+      historyTable.innerHTML = "";
+      for (let i = 0; i < records.length; i++) {
+        const row = document.createElement("tr");
+
+        const dateCell = document.createElement("td");
+        dateCell.textContent = records[i].date;
+        row.appendChild(dateCell);
+
+        const weightCell = document.createElement("td");
+        weightCell.textContent = records[i].weight + " kg";
+        row.appendChild(weightCell);
+
+        const trendCell = document.createElement("td");
+        if (i > 0) {
+          const diff = records[i].weight - records[i-1].weight;
+          if (diff > 0) {
+            trendCell.textContent = "↑ +" + diff.toFixed(1) + "kg";
+            trendCell.className = "up";
+          } else if (diff < 0) {
+            trendCell.textContent = "↓ " + diff.toFixed(1) + "kg";
+            trendCell.className = "down";
+          } else {
+            trendCell.textContent = "– same";
+            trendCell.className = "same";
+          }
+        } else {
+          trendCell.textContent = "–";
+        }
+        row.appendChild(trendCell);
+
+        // Delete button
+        const actionCell = document.createElement("td");
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "Delete";
+        deleteBtn.className = "delete-btn";
+        deleteBtn.onclick = function() {
+          if (confirm("Delete this record?")) {
+            records.splice(i, 1);
+            localStorage.setItem("weightRecords", JSON.stringify(records));
+            renderTable();
+          }
+        };
+        actionCell.appendChild(deleteBtn);
+        row.appendChild(actionCell);
+
+        historyTable.appendChild(row);
+      }
+    }
+
+    form.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const date = document.getElementById("date").value;
+      const weight = parseFloat(document.getElementById("weight").value);
+
+      if (!date || !weight) return;
+
+      records.push({ date, weight });
+      localStorage.setItem("weightRecords", JSON.stringify(records));
+      renderTable();
+      form.reset();
+    });
+
+    renderTable();
+  </script>
+</body>
+</html>
